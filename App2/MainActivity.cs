@@ -8,6 +8,9 @@ using Android.Widget;
 using Android.OS;
 using App2.Views;
 using App2.Models;
+using Android.Hardware;
+using Android.Provider;
+using Android.Graphics;
 
 namespace App2
 {
@@ -15,6 +18,9 @@ namespace App2
     public class MainActivity : Activity
     {
         int count = 1;
+        private ImageView imageView;
+        private Button btCamera;
+
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
@@ -38,6 +44,7 @@ namespace App2
             webView.LoadDataWithBaseURL("file:///android_asset/", page, "text/html", "UTF-8", null);
 
             var botao = FindViewById<Button>(Resource.Id.button1);
+            var btGoToFoto = FindViewById<Button>(Resource.Id.btGoToFoto);
             var ratingBar = FindViewById<RatingBar>(Resource.Id.ratingBar1);
             var imagem = FindViewById<ImageView>(Resource.Id.imageView1);
 
@@ -75,11 +82,36 @@ namespace App2
 
             };
 
+            btGoToFoto.Click += BtGoToFoto_Click;
+
+
+
 
 
         }
 
+        private void BtGoToFoto_Click(object sender, EventArgs e)
+        {
+            SetContentView(Resource.Layout.Foto);
+            btCamera = FindViewById<Button>(Resource.Id.btCamera);
+            btCamera.Click += BtCamera_Click;
 
+            imageView = FindViewById<ImageView>(Resource.Id.imageView);
+        }
+
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, resultCode, data);
+            Bitmap bitmap = (Bitmap)data.Extras.Get("data");
+
+            imageView.SetImageBitmap(bitmap);
+        }
+
+        private void BtCamera_Click(object sender, EventArgs e)
+        {
+            Intent intent = new Intent(MediaStore.ActionImageCapture);
+            StartActivityForResult(intent, 0);
+        }
 
         private class HybridWebViewClient : WebViewClient
         {
