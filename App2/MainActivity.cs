@@ -11,6 +11,8 @@ using App2.Models;
 using Android.Hardware;
 using Android.Provider;
 using Android.Graphics;
+using System.IO;
+using RestSharp;
 
 namespace App2
 {
@@ -19,6 +21,7 @@ namespace App2
     {
         int count = 1;
         private ImageView imageView;
+        private EditText txtHost;
         private Button btCamera;
 
         protected override void OnCreate(Bundle bundle)
@@ -50,7 +53,7 @@ namespace App2
 
 
 
-
+            
             ratingBar.RatingBarChange += (o, e) =>
             {
                 if (ratingBar.Rating > 5)
@@ -97,6 +100,7 @@ namespace App2
             btCamera.Click += BtCamera_Click;
 
             imageView = FindViewById<ImageView>(Resource.Id.imageView);
+            txtHost = FindViewById<EditText>(Resource.Id.editText1);
         }
 
         protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
@@ -105,6 +109,40 @@ namespace App2
             Bitmap bitmap = (Bitmap)data.Extras.Get("data");
 
             imageView.SetImageBitmap(bitmap);
+            EnviaImagemParaPDF(bitmap);
+
+        }
+
+        private void EnviaImagemParaPDF(Bitmap bitmap)
+        {
+            MemoryStream stream = new MemoryStream();
+            bitmap.Compress(Bitmap.CompressFormat.Jpeg, 100, stream);
+
+
+
+            var base64 = Convert.ToBase64String(stream.ToArray());
+
+            var html = $"<h2>Imagem gerado a partir de foto do aplicativo</h2>" +
+                $"<img src='data:image/png;base64, {base64}' />";
+
+            //    html = Android.Text.Html.EscapeHtml(html);
+            var host = $"{txtHost.Text}.ngrok.io";
+            var client = new RestClient($"http://{host}/gerapdf");
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("cache-control", "no-cache");
+            request.AddHeader("Connection", "keep-alive");
+            request.AddHeader("Content-Length", "7");
+            request.AddHeader("Accept-Encoding", "gzip, deflate");
+            request.AddHeader("Cookie", "ASP.NET_SessionId=tdfad1vazppuwxq52mwo35pq");
+            request.AddHeader("Host", host);
+            request.AddHeader("Cache-Control", "no-cache");
+            request.AddHeader("Accept", "*/*");
+            request.AddHeader("User-Agent", "PostmanRuntime/7.15.2");
+            request.AddHeader("Content-Type", "application/json");
+            request.AddJsonBody(html);
+            //request.AddParameter("undefined", $"\"{html}\"", ParameterType.RequestBody);
+            IRestResponse response = client.Execute(request);
+
         }
 
         private void BtCamera_Click(object sender, EventArgs e)
